@@ -4,13 +4,12 @@ import (
 	// "bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/RedisLabs/sentinel_tunnel/st_logger"
-	"github.com/RedisLabs/sentinel_tunnel/st_sentinel_connection"
 	"io"
 	"io/ioutil"
 	"net"
 	"os"
-	"time"
+	"sentinel_tunnel/st_logger"
+	"sentinel_tunnel/st_sentinel_connection"
 )
 
 type SentinelTunnellingDbConfig struct {
@@ -113,13 +112,12 @@ func (st_client *SentinelTunnellingClient) Start() {
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Println("usage : sentinel_tunnel <config_file_path> <log_file_path>")
+		fmt.Println("usage : sentinel_tunnel <config_file_path> <log_destination>")
+		fmt.Println("       log_destination can be a file path or 'stdout'")
 		return
 	}
 	st_logger.InitializeLogger(os.Args[2])
 	st_client := NewSentinelTunnellingClient(os.Args[1])
 	st_client.Start()
-	for {
-		time.Sleep(1000 * time.Millisecond)
-	}
+	select {}
 }

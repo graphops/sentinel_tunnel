@@ -2,6 +2,7 @@ package st_logger
 
 import (
 	"bytes"
+	"io"
 	"log"
 	"os"
 )
@@ -15,25 +16,34 @@ const (
 	DEBUG = iota
 )
 
-func InitializeLogger(log_file_path string) {
-	file, err := os.OpenFile(log_file_path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalln("Failed to open log file", log_file_path, ":", err)
+func InitializeLogger(log_destination string) {
+	var output io.Writer
+
+	if log_destination == "stdout" {
+		output = os.Stdout
+	} else {
+		file, err := os.OpenFile(log_destination, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalln("Failed to open log file", log_destination, ":", err)
+		}
+		output = file
 	}
-	logger = log.New(file,
+
+	logger = log.New(output,
 		"",
 		log.Ldate|log.Ltime)
 }
 
 func WriteLogMessage(level int, message ...string) {
 	var buffer bytes.Buffer
-	if level == INFO {
+	switch level {
+	case INFO:
 		buffer.WriteString("info : ")
-	} else if level == ERROR {
+	case ERROR:
 		buffer.WriteString("error : ")
-	} else if level == FATAL {
+	case FATAL:
 		buffer.WriteString("fatal : ")
-	} else if level == FATAL {
+	case DEBUG:
 		buffer.WriteString("debug : ")
 	}
 
@@ -42,10 +52,14 @@ func WriteLogMessage(level int, message ...string) {
 		buffer.WriteString(" ")
 	}
 
+	if buffer.Len() > 0 {
+		buffer.Truncate(buffer.Len() - 1)
+	}
+
 	logger.Println(buffer.String())
 
 	if level == FATAL {
-		logger.Println("fatal error occure commiting suicide")
+		logger.Println("fatal error occurred, exiting")
 		os.Exit(1)
 	}
 }
